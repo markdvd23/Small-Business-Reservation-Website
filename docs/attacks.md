@@ -62,25 +62,6 @@ node scripts/security/brute-force.mjs --email bf-lab-you@example.com --max 10 --
 VULNERABLE — password recovered after 5 attempt(s): "unlilab123"
 ```
 
-### Run it in the website (no terminal)
-
-The same attack runs from inside the site on **`/security-lab.html`** — open it
-on the preview or the deployed site (it is not linked from the navigation and
-is `noindex`).
-
-1. Press **Create lab account** — creates a throwaway `bf-lab-…@example.com`
-   with password `unlilab123` (already candidate #5 in the wordlist) and fills
-   the target field for you.
-2. Press **Start attack** — the log shows each attempt: candidate, server
-   response, time. Edit the wordlist, attempt cap (max 25), or delay (min
-   500 ms) first if you want.
-3. Read the verdict banner — expect `VULNERABLE … after 5 attempt(s)`.
-4. Press **Delete lab account** — the account from this browser session is
-   removed and the project is left clean.
-
-The page uses the exact same endpoint as the terminal tool and enforces the
-same limits (hard cap 25, ≥500 ms apart, stops on success or lockout).
-
 **What this shows**
 
 - A weak password falls in **five tries**; a real attacker's wordlist has

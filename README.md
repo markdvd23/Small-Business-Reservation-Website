@@ -11,7 +11,6 @@ public/                 served by Firebase Hosting (URLs match this folder)
   branches.html         branches, from Firestore
   login.html            sign in / sign up
   dashboard.html        staff + manager board
-  security-lab.html     brute-force lab page (Attack 1, not linked in nav)
   accounts/guest/       guest landing
   accounts/user/        customer account, booking, ticket pages
   css/                  styles.css (site), dashboard.css (board)
