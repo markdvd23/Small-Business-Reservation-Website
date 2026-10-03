@@ -1,0 +1,95 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Security Lab · Brute Force — Unli Chix</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>
+body:has(.lab-wrap){background:var(--paper)}
+.lab-head{background:var(--ink);color:var(--cream)}
+.lab-head .accent{color:var(--mango)}
+.lab-wrap{max-width:980px;margin:0 auto;padding:2.5rem 5vw 4rem}
+.lab-note{margin:1.5rem 0 0;padding:1rem 1.15rem;background:var(--mango);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font-weight:800;line-height:1.5}
+.lab-steps{margin:1.25rem 0 0;padding-left:1.25rem;font-weight:700;line-height:1.9}
+.lab-card{background:var(--cream);padding:1.75rem;margin-top:1.5rem;box-shadow:7px 7px 0 #24140e22}
+.lab-card h2{font:700 1.5rem Fredoka,sans-serif;margin:0 0 .9rem}
+.lab-row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end}
+.lab-row .field{flex:1 1 15rem;margin:0}
+.lab-half{display:flex;gap:1rem;flex-wrap:wrap}
+.lab-half .field{flex:0 1 11rem;margin:0}
+.lab-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.1rem;align-items:center}
+.lab-status{margin:.9rem 0 0;font-weight:700;color:var(--muted);line-height:1.5}
+.log{width:100%;border-collapse:collapse}
+.log th,.log td{text-align:left;padding:.55rem .6rem;border-bottom:1px solid #24140e1f;word-break:break-all}
+.log th{font:800 .78rem/1.2 Fredoka,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.log td{font:700 .9rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+.log td.fail{color:var(--muted)}
+.log td.cracked{color:#0b5c1b;background:#cdf3d5}
+.log td.locked{color:var(--chili);background:#ffe5a2}
+.log-hint{margin:.75rem 0 0;font-weight:700;color:var(--muted)}
+.verdict{margin:1.5rem 0 0;padding:1.15rem 1.25rem;border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font:800 1.05rem/1.55 Fredoka,sans-serif}
+.verdict:empty{display:none}
+.verdict.vulnerable{background:var(--chili);color:var(--cream)}
+.verdict.mitigated{background:var(--mango);color:var(--ink)}
+.verdict.plain{background:var(--cream);color:var(--ink)}
+.verdict.bad{background:#ffe5a2;color:var(--ink)}
+@media(max-width:720px){.lab-wrap{padding:1.75rem 1rem 3rem}.lab-card{padding:1.25rem}}
+</style>
+<script src="js/session.js" defer></script>
+</head><body>
+<nav class="nav"><a class="nav-brand" href="index.html">Unli Chix</a><ul class="nav-links"><li><a href="menu.html">The feast</a></li><li><a href="branches.html">Branches</a></li><li><a class="nav-cta" href="login.html">Sign in</a></li></ul></nav>
+<header class="page lab-head"><p class="eyebrow" style="color:var(--mango)">Security lab · Attack 01</p><h1 class="display">Brute force, in the <span class="accent">browser.</span></h1><p class="lede" style="color:var(--cream)">Wordlist attack against the sign-in behind login.html — run entirely on this page, no terminal needed.</p></header>
+<main class="lab-wrap">
+  <p class="lab-note">Authorized testing on your own project only. Runs are hard-capped at 25 attempts, at least 500 ms apart, and stop on success or Firebase lockout. This page is not linked from the site navigation.</p>
+
+  <section class="lab-card">
+    <h2>How to run the attack</h2>
+    <ol class="lab-steps">
+      <li>Create a throwaway lab account (or type an account you own).</li>
+      <li>Press <strong>Start attack</strong> and watch the wordlist fire.</li>
+      <li>Read the verdict — cracked, locked out, or not cracked.</li>
+      <li>Delete the lab account when you're done.</li>
+    </ol>
+    <div class="lab-row" style="margin-top:1.25rem">
+      <label class="field">Target email<input type="email" id="targetEmail" class="form-input" placeholder="bf-lab-you@example.com" autocomplete="off" spellcheck="false"></label>
+      <div class="lab-actions">
+        <button type="button" class="btn-ghost" id="createLab">Create lab account</button>
+        <button type="button" class="btn-ghost" id="deleteLab" disabled>Delete lab account</button>
+      </div>
+    </div>
+    <label class="field" style="margin-top:1rem">Wordlist — one candidate password per line<textarea id="wordlist" class="form-input" rows="6" spellcheck="false">123456
+password
+qwerty123
+iloveyou
+unlilab123
+admin123
+letmein
+changeme
+football
+unli12345</textarea></label>
+    <div class="lab-half" style="margin-top:1rem">
+      <label class="field">Attempt cap (max 25)<input type="number" id="maxAttempts" class="form-input" value="10" min="1" max="25"></label>
+      <label class="field">Delay between tries (ms, min 500)<input type="number" id="delayMs" class="form-input" value="1500" min="500" max="10000" step="100"></label>
+    </div>
+    <div class="lab-actions">
+      <button type="button" class="btn-primary" id="startBtn">Start attack</button>
+      <button type="button" class="btn-ghost" id="stopBtn" disabled>Stop</button>
+    </div>
+    <p class="lab-status" id="labStatus" role="status"></p>
+  </section>
+
+  <section class="lab-card">
+    <h2>Attack log</h2>
+    <table class="log"><thead><tr><th>#</th><th>Candidate</th><th>Server response</th><th>Time</th></tr></thead><tbody id="logBody"></tbody></table>
+    <p class="log-hint" id="logHint">No attempts yet — press Start attack.</p>
+  </section>
+
+  <p class="verdict" id="verdict" role="status"></p>
+
+  <section class="lab-card">
+    <h2>What this proves</h2>
+    <p style="font-weight:700;line-height:1.6;margin:0">Every attempt goes to the exact endpoint <code>login.html</code> uses (Firebase Identity Toolkit <code>accounts:signInWithPassword</code>). A password inside the wordlist falls in a handful of tries — which is why the mitigation is password strength plus Firebase's lockout, not the login form itself. Full write-up: <code>docs/attacks.md</code>. Terminal version: <code>scripts/security/brute-force.mjs</code>.</p>
+  </section>
+</main>
+<footer class="footer"><a href="index.html">Unli Chix</a><small>SECURITY LAB · ATTACK 1</small></footer>
+<script type="module" src="js/security-lab.js"></script>
+</body></html>

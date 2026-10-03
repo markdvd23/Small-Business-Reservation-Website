@@ -1,0 +1,14 @@
+# Demo wordlist for scripts/security/brute-force.mjs — one candidate per line.
+# Lines starting with # are ignored.
+# `unlilab123` is the throwaway lab-account password used in docs/attacks.md;
+# replace it if you create your own lab account.
+123456
+password
+qwerty123
+iloveyou
+unlilab123
+admin123
+letmein
+changeme
+football
+unli12345
