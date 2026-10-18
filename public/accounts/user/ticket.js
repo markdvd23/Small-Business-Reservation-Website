@@ -49,10 +49,11 @@ function render(t) {
   const note = el('small', 'save-note');
   note.setAttribute('aria-live', 'polite');
   if (upcoming(t)) {
+    const move = Object.assign(el('a', 'btn-ghost', 'Reschedule'), { href: 'book.html?branch=' + encodeURIComponent((t.branch || '').toLowerCase()) + '&reschedule=' + encodeURIComponent(t.id) });
     const cancel = el('button', 'btn-ghost', 'Cancel reservation');
     cancel.type = 'button';
     cancel.addEventListener('click', () => cancelReserve(t, cancel, note));
-    actions.append(cancel);
+    actions.append(move, cancel);
     if (t.at || (t.date && t.slot)) {
       const ics = el('button', 'btn-ghost', 'Add to calendar');
       ics.type = 'button';
@@ -63,7 +64,16 @@ function render(t) {
   actions.append(Object.assign(el('a', 'text-link', t.type === 'order' ? 'See the feast →' : 'View branch →'),
     { href: t.type === 'order' ? '../../menu.html' : '../../branches.html' }), note);
 
-  show(el('p', 'label', TYPE[t.type] || 'Ticket'), el('h1', 'section-title', '#' + t.no), dl, actions);
+  const qr = el('div', 'reservation-qr');
+  if (t.type === 'reserve') {
+    const code = el('div');
+    code.setAttribute('role', 'img');
+    code.setAttribute('aria-label', 'Reservation QR code for #' + t.no);
+    qr.append(code);
+    if (window.QRCode) new QRCode(code, { text: 'unlichix:reservation:' + t.id + ':' + t.no, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+    qr.append(el('small', 'form-hint', 'Show this code or reservation number when you arrive.'));
+  }
+  show(el('p', 'label', TYPE[t.type] || 'Ticket'), el('h1', 'section-title', '#' + t.no), qr, dl, actions);
 }
 
 async function cancelReserve(t, btn, note) {

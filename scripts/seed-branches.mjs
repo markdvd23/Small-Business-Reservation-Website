@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { connect, flag, FieldValue } from './lib/admin.mjs';
 
 const DRY = flag('--dry-run');
-const FIELDS = ['name', 'address', 'phone', 'open', 'lastSeating', 'close', 'active', 'sort'];
+const FIELDS = ['name', 'address', 'phone', 'open', 'lastSeating', 'close', 'capacity', 'active', 'sort'];
 const HHMM = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 const branches = JSON.parse(readFileSync(new URL('./data/branches.json', import.meta.url), 'utf8'));
@@ -32,6 +32,7 @@ branches.forEach((b, i) => {
   if (![b.open, b.lastSeating, b.close].every(t => HHMM.test(t || ''))) problems.push(`${at}: open, lastSeating, close must be HH:MM`);
   else if (!(b.open < b.lastSeating && b.lastSeating <= b.close)) problems.push(`${at}: need open < lastSeating <= close`);
   if (typeof b.active !== 'boolean') problems.push(`${at}: active must be true or false`);
+  if (!Number.isInteger(b.capacity) || b.capacity < 1 || b.capacity > 500) problems.push(`${at}: capacity must be a whole number from 1 to 500`);
   if (!Number.isInteger(b.sort)) problems.push(`${at}: sort must be a whole number`);
 });
 if (problems.length) {

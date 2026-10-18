@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security & Resilience — Unli Chix</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/security.css">
+  <script src="js/session.js" defer></script>
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/security/dashboard-ui.js"></script>
+</head>
+<!-- data-protected: firebase.js bounces anyone without a confirmed role to login.
+     The suite itself additionally requires the manager role (safety-guard.js). -->
+<body data-protected>
+  <nav class="nav" aria-label="Main">
+    <a class="nav-brand" href="index.html">Unli Chix</a>
+    <div class="account-nav">
+      <a href="dashboard.html">Kitchen board</a>
+      <span class="role-badge" id="roleBadge"></span>
+      <a href="login.html" class="nav-cta" data-logout>Log out</a>
+    </div>
+  </nav>
+
+  <main class="sec" id="sec">
+    <header class="sec-head">
+      <div>
+        <p class="eyebrow">Authorized · Non-destructive · Manager only</p>
+        <h1 class="display">Security &amp; <span class="accent">resilience</span></h1>
+      </div>
+    </header>
+
+    <!-- Safety banner: live target + the circuit breaker -->
+    <div class="sec-banner" id="secBanner" role="status">
+      <span class="sec-badge" id="secTargetBadge">Checking…</span>
+      <span class="sec-banner-text" id="secBannerText">Verifying authorization and target allowlist…</span>
+      <button type="button" class="sec-estop" id="estop" disabled>■ Emergency Stop</button>
+    </div>
+
+    <!-- Shown only when the safety guard refuses (wrong role or disallowed host) -->
+    <section class="sec-locked" id="secLocked" hidden>
+      <h2>Assessment suite locked</h2>
+      <p id="secLockedMsg"></p>
+    </section>
+
+    <!-- Everything below is built/enabled by dashboard-ui.js once the guard passes -->
+    <div id="secApp" hidden>
+      <div class="sec-tabs" id="secTabs" role="tablist" aria-label="Assessment areas"></div>
+      <div id="secPanels">
+        <section class="sec-panel" id="panel-integrity" role="tabpanel" aria-labelledby="tab-integrity"></section>
+        <section class="sec-panel" id="panel-resilience" role="tabpanel" aria-labelledby="tab-resilience" hidden></section>
+        <section class="sec-panel" id="panel-tas" role="tabpanel" aria-labelledby="tab-tas" hidden></section>
+        <section class="sec-panel" id="panel-audit" role="tabpanel" aria-labelledby="tab-audit" hidden></section>
+      </div>
+    </div>
+
+    <h2 class="sr-only">Live output console</h2>
+    <div class="sec-console" id="secConsole" aria-live="polite" aria-label="Live assessment log"></div>
+  </main>
+</body>
+</html>

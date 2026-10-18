@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            scripts/package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install dependencies
+        run: |
+          npm ci --prefix scripts
+          npm ci --prefix functions
+      - name: Audit production dependencies
+        run: |
+          npm audit --omit=dev --prefix scripts
+          npm audit --omit=dev --prefix functions
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          while IFS= read -r file; do node --check "$file"; done < <(find public functions scripts -type f \( -name '*.js' -o -name '*.mjs' \) -not -path '*/node_modules/*')
+      - name: Check Functions
+        run: npm run lint --prefix functions
+      - name: Test Firestore rules
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-unli --config firebase.json "cd scripts && npm run test:rules"

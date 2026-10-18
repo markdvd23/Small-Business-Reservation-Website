@@ -1,4 +1,3 @@
 .guest-nav { display: flex; align-items: center; gap: 1rem; }
 .guest-nav a { font-size: .85rem; font-weight: 900; text-decoration: none; }
 .guest-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
-@media (max-width: 720px) { .guest-nav a:not(.nav-cta) { display: none; } }

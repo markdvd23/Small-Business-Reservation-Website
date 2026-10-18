@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800;900&display=swap');
-:root{--ink:#24140e;--red:#9d2918;--chili:#d94b26;--mango:#ffc928;--cream:#fff8e8;--paper:#f6e7c8;--leaf:#34683d;--line:#d7b97c;--muted:#785e4d;--shadow:0 16px 36px #5a241a24}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:'Nunito Sans',sans-serif}a{color:inherit}button,input{font:inherit}.nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:var(--cream);border-bottom:2px solid var(--ink);position:sticky;top:0;z-index:10}.nav-brand{font:700 1.55rem/1 Fredoka,sans-serif;color:var(--red);text-decoration:none}.nav-links,.account-nav{display:flex;align-items:center;gap:1.5rem;list-style:none;margin:0;padding:0}.nav-links a,.account-nav a{font-size:.86rem;font-weight:900;text-decoration:none}.nav-cta,.btn-primary{border:2px solid var(--ink);background:var(--mango);color:var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;padding:.65rem 1rem;font-weight:900;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;cursor:pointer}.nav-cta:hover,.btn-primary:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}.btn-ghost{border:2px solid var(--ink);background:var(--cream);padding:.65rem 1rem;font-weight:900;text-decoration:none;display:inline-flex}.eyebrow{font:500 .72rem/1 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}.page{max-width:1200px;margin:auto;padding:3.5rem 5vw 5rem}.display{font:700 clamp(2.8rem,7vw,6.6rem)/.88 Fredoka,sans-serif;letter-spacing:-.05em;margin:.65rem 0 1rem}.display .accent{color:var(--red)}.lede{max-width:48ch;font-size:1.1rem;line-height:1.6;color:var(--muted);font-weight:700}.ticket{background:var(--cream);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);position:relative}.ticket:before,.ticket:after{content:'';position:absolute;left:-2px;right:-2px;height:9px;background:radial-gradient(circle at 7px 0,transparent 7px,var(--paper) 7.5px) 0 0/14px 9px repeat-x;z-index:1}.ticket:before{top:-2px}.ticket:after{bottom:-2px;transform:rotate(180deg)}.card{background:var(--cream);border:2px solid var(--ink);padding:1.3rem;box-shadow:5px 5px 0 #24140e22}.section-title{font:700 clamp(1.8rem,3vw,2.7rem)/1 Fredoka,sans-serif;margin:0}.grid{display:grid;gap:1.25rem}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.label{font:500 .68rem/1 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--red)}.rule{height:2px;background:var(--ink);border:0;margin:2rem 0}.footer{padding:2rem 5vw;background:var(--ink);color:var(--cream);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}.footer a{color:var(--mango);font:700 1.4rem Fredoka,sans-serif;text-decoration:none}.footer small{font-family:'DM Mono',monospace}.field{display:grid;gap:.4rem;font-weight:900;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}.field input{border:2px solid var(--ink);padding:.75rem;background:#fffdf7}.field input:focus{outline:3px solid var(--mango);outline-offset:2px}.notice{padding:.75rem 1rem;background:#ffe5a2;border-left:5px solid var(--chili);font-weight:800}@media(max-width:720px){.nav{padding:0 1rem}.nav-links li:not(:last-child),.account-nav a:not(.nav-cta){display:none}.page{padding:2.5rem 1rem 3.5rem}.two,.three{grid-template-columns:1fr}.display{font-size:clamp(3rem,14vw,4.6rem)}}
+:root{--ink:#24140e;--red:#9d2918;--chili:#d94b26;--mango:#ffc928;--cream:#fff8e8;--paper:#f6e7c8;--leaf:#34683d;--line:#d7b97c;--muted:#785e4d;--shadow:0 16px 36px #5a241a24}*{box-sizing:border-box}[hidden]{display:none!important}html{scroll-behavior:smooth;scroll-padding-top:88px}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}body{margin:0;background:var(--paper);color:var(--ink);font-family:'Nunito Sans',sans-serif}a{color:inherit}button,input{font:inherit}.nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:var(--cream);border-bottom:2px solid var(--ink);position:sticky;top:0;z-index:10}.nav-brand{font:700 1.55rem/1 Fredoka,sans-serif;color:var(--red);text-decoration:none}.nav-links,.account-nav{display:flex;align-items:center;gap:1.5rem;list-style:none;margin:0;padding:0}.nav-links a,.account-nav a{font-size:.86rem;font-weight:900;text-decoration:none}.nav-cta,.btn-primary{border:2px solid var(--ink);background:var(--mango);color:var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;padding:.65rem 1rem;font-weight:900;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;cursor:pointer}.nav-cta:hover,.btn-primary:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}.btn-ghost{border:2px solid var(--ink);background:var(--cream);color:var(--ink);padding:.65rem 1rem;font-weight:900;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;cursor:pointer}.btn-ghost:hover:not(:disabled){background:var(--paper)}a:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--chili);outline-offset:3px}.eyebrow{font:500 .72rem/1 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}.page{max-width:1200px;margin:auto;padding:3.5rem 5vw 5rem}.display{font:700 clamp(2.8rem,7vw,6.6rem)/.88 Fredoka,sans-serif;letter-spacing:-.05em;margin:.65rem 0 1rem}.display .accent{color:var(--red)}.lede{max-width:48ch;font-size:1.1rem;line-height:1.6;color:var(--muted);font-weight:700}.ticket{background:var(--cream);border:2px solid var(--ink);box-shadow:7px 7px 0 var(--ink);position:relative}.ticket:before,.ticket:after{content:'';position:absolute;left:-2px;right:-2px;height:9px;background:radial-gradient(circle at 7px 0,transparent 7px,var(--paper) 7.5px) 0 0/14px 9px repeat-x;z-index:1}.ticket:before{top:-2px}.ticket:after{bottom:-2px;transform:rotate(180deg)}.card{background:var(--cream);border:2px solid var(--ink);padding:1.3rem;box-shadow:5px 5px 0 #24140e22}.section-title{font:700 clamp(1.8rem,3vw,2.7rem)/1 Fredoka,sans-serif;margin:0}.grid{display:grid;gap:1.25rem}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.label{font:500 .68rem/1 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--red)}.rule{height:2px;background:var(--ink);border:0;margin:2rem 0}.footer{padding:2rem 5vw;background:var(--ink);color:var(--cream);display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}.footer a{color:var(--mango);font:700 1.4rem Fredoka,sans-serif;text-decoration:none}.footer small{font-family:'DM Mono',monospace}.field{display:grid;gap:.4rem;font-weight:900;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}.field input{border:2px solid var(--ink);padding:.75rem;background:#fffdf7}.field input:focus{outline:3px solid var(--mango);outline-offset:2px}.notice{padding:.75rem 1rem;background:#ffe5a2;border-left:5px solid var(--chili);font-weight:800}@media(max-width:720px){.page{padding:2.5rem 1rem 3.5rem}.two,.three{grid-template-columns:1fr}.display{font-size:clamp(3rem,14vw,4.6rem)}}
 
 /* Booking modal + toast (app.js, Plan.md §7.3C) */
 .modal-backdrop{position:fixed;inset:0;z-index:50;background:#24140eb8;display:grid;place-items:center;padding:1rem}
@@ -30,7 +30,6 @@ button.btn-ghost{color:var(--ink);cursor:pointer}
 
 /* Home: how-it-works block */
 body:has(.hero) main > .page{max-width:1320px;padding-top:4.5rem;padding-bottom:4.5rem}
-body:has(.hero) .footer{display:none}
 body:has(.hero) .promise{text-align:center}
 body:has(.hero) main > .page > .eyebrow{margin:0 0 1.15rem}
 body:has(.hero) main > .page > .grid{gap:1.5rem}
@@ -47,9 +46,8 @@ body:has(.hero) main > .page .card:nth-child(3) .lede{color:var(--cream)}
 @media(max-width:720px){body:has(.hero) main > .page{padding-top:3rem;padding-bottom:3rem}body:has(.hero) main > .page .card{min-height:220px;padding:1.5rem}body:has(.hero) main > .page .card .section-title{font-size:2.25rem}}
 
 /* Correct photo-to-dish pairing on the feast menu. */
-.dish[data-item="milktea"] img{content:url('https://images.unsplash.com/photo-1692783029695-1956cd253e10?auto=format&fit=crop&w=900&q=85')}
-.dish[data-item="ramen"] img{content:url('https://images.unsplash.com/photo-1736346942664-64c0e75a9eaa?auto=format&fit=crop&w=900&q=85')}
-body:has(.dish) .footer{display:none}
+.dish[data-item="milktea"] img[src*="photo-1621221814631"]{content:url('https://images.unsplash.com/photo-1692783029695-1956cd253e10?auto=format&fit=crop&w=900&q=85')}
+.dish[data-item="ramen"] img[src*="photo-1569718212165"]{content:url('https://images.unsplash.com/photo-1736346942664-64c0e75a9eaa?auto=format&fit=crop&w=900&q=85')}
 
 /* Sign-in: calm entrance, then clear feedback while Firebase signs in. */
 body:has(.login){background:var(--cream)}
@@ -71,7 +69,6 @@ body.is-signing-in .login-art,body.is-signing-in .login-form{animation:login-lea
 
 /* Branches page: make the location choices feel like the main content. */
 body:has(.branch){background:var(--paper)}
-body:has(.branch) .footer{display:none}
 body:has(.branch) .page{max-width:1320px;padding-top:4.5rem;padding-bottom:4rem}
 body:has(.branch) .display{max-width:9ch}
 body:has(.branch) .grid{gap:1.5rem;margin-top:2.5rem}
@@ -86,3 +83,38 @@ body:has(.branch) .branch .btn-primary,body:has(.branch) .branch .btn-ghost{min-
 .skel{display:block;height:1rem;width:80%;background:linear-gradient(90deg,var(--paper) 0%,#fffdf7 50%,var(--paper) 100%) 0 0/200% 100%;animation:skel 1.2s linear infinite}.skel-title{height:2.2rem;width:60%}.skel.short{width:45%}
 @keyframes skel{to{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){.skel{animation:none}}
+.legal { max-width: 800px; }
+.legal h2 { margin-top: 2.5rem; }
+.legal p:not(.eyebrow):not(.lede):not(.form-hint) { line-height: 1.75; }
+
+/* Footer: legal links on every public page. */
+.footer{align-items:center}
+.footer-links{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.25rem}
+.footer .footer-links a{font:500 .75rem/1.4 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--cream);text-decoration:underline;text-underline-offset:3px}
+.footer .footer-links a:hover{color:var(--mango)}
+.footer a:focus-visible{outline-color:var(--mango)}
+
+/* Nav menu (session.js): phones and small tablets get a Menu button and a
+ * drop-down instead of links that silently disappear. */
+.nav{gap:1rem}
+.nav-toggle{display:none}
+@media(max-width:900px){
+  .nav{padding:0 1rem}
+  .nav-toggle{display:inline-flex;align-items:center;gap:.6rem;border:2px solid var(--ink);background:var(--cream);color:var(--ink);padding:.55rem .8rem;font:900 .82rem/1 'Nunito Sans',sans-serif;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+  .nav-toggle-bars{width:16px;height:2px;background:currentColor;box-shadow:0 -5px 0 currentColor,0 5px 0 currentColor}
+  .nav.is-open .nav-toggle{background:var(--mango)}
+  .nav.is-open .nav-toggle-bars{background:transparent;box-shadow:none;position:relative}
+  .nav.is-open .nav-toggle-bars::before,.nav.is-open .nav-toggle-bars::after{content:'';position:absolute;left:0;top:0;width:16px;height:2px;background:currentColor;transform:rotate(45deg)}
+  .nav.is-open .nav-toggle-bars::after{transform:rotate(-45deg)}
+  .nav .nav-menu{position:absolute;top:100%;left:0;right:0;display:none;flex-direction:column;align-items:stretch;gap:0;margin:0;padding:.5rem 1rem 1.25rem;background:var(--cream);border-bottom:2px solid var(--ink);box-shadow:0 14px 28px #24140e2e;max-height:calc(100svh - 72px);overflow-y:auto}
+  .nav.is-open .nav-menu{display:flex}
+  .nav-menu li{display:block}
+  .nav .nav-menu a:not(.nav-cta){display:flex;padding:.9rem .25rem;border-bottom:1px dashed var(--line);font-size:1rem}
+  .nav .nav-menu .nav-cta{display:flex;margin-top:1rem;padding:.85rem 1rem;font-size:1rem}
+  .nav-menu li:has(.nav-cta)+li a{border-bottom:0}
+  .nav-menu .role-badge{align-self:flex-start;margin:.9rem 0 0}
+}
+@media(prefers-reduced-motion:reduce){.nav-cta:hover,.btn-primary:hover{transform:none;box-shadow:4px 4px 0 var(--ink)}}
+
+/* Branch status uses the loaded DM Mono weight, not a faux bold. */
+.open{font-weight:500}

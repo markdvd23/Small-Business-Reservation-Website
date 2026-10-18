@@ -38,7 +38,7 @@ const newDish = (over = {}) => ({ ...dish(over), updatedAt: serverTimestamp() })
 
 const branch = (over = {}) => ({
   name: 'Rodriguez', address: 'J.P. Rizal Street, Rodriguez, Rizal', phone: '0917 555 0100',
-  open: '10:00', lastSeating: '20:30', close: '22:00', active: true, sort: 10, updatedAt: new Date(), ...over,
+  open: '10:00', lastSeating: '20:30', close: '22:00', capacity: 40, active: true, sort: 10, updatedAt: new Date(), ...over,
 });
 const newBranch = (over = {}) => ({ ...branch(over), updatedAt: serverTimestamp() });
 
@@ -85,7 +85,9 @@ test('customer: reads own profile, not another', async () => {
 });
 test('customer: updates own name only', async () => {
   await assertSucceeds(updateDoc(doc(as('ana'), 'users', 'ana'), { name: 'Ana Cruz', updatedAt: serverTimestamp() }));
-  await assertFails(updateDoc(doc(as('ana'), 'users', 'ana'), { role: 'manager' }));
+  await assertFails(updateDoc(doc(as('ana'), 'users', 'ana'), { role: 'manager', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(as('ana'), 'users', 'ana'), { email: 'attacker@example.com', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(as('ana'), 'users', 'ana'), { name: 'No timestamp' }));
   await assertFails(updateDoc(doc(as('ana'), 'users', 'ana'), { name: '' }));
   await assertFails(updateDoc(doc(as('ben'), 'users', 'ana'), { name: 'Hacked' }));
 });
@@ -126,8 +128,8 @@ const table = (uid, over = {}) => {
     ownerUid: uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...over,
   };
 };
-test('customer: books a table for themselves', () =>
-  assertSucceeds(setDoc(doc(as('ana'), 'tickets', 't1'), table('ana'))));
+test('customer: cannot bypass the capacity-checked booking function', () =>
+  assertFails(setDoc(doc(as('ana'), 'tickets', 't1'), table('ana'))));
 test('customer: bad table bookings are refused', async () => {
   const db = as('ana');
   const past = Timestamp.fromDate(new Date(Date.now() - 3600000));
@@ -253,6 +255,8 @@ test('branches: bad shapes are refused', async () => {
   await assertFails(upd({ open: '21:00' }));
   await assertFails(upd({ lastSeating: '22:30' }));
   await assertFails(upd({ active: 'yes' }));
+  await assertFails(upd({ capacity: 0 }));
+  await assertFails(upd({ capacity: 501 }));
   await assertFails(upd({ sort: 1.5 }));
   await assertFails(upd({ owner: 'mia' }));
   await assertFails(updateDoc(doc(db, 'branches', 'Rodriguez'), { name: 'No stamp' }));

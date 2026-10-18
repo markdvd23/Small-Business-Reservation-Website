@@ -12,8 +12,11 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { getAnalytics, isSupported } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js';
 import {
   getAuth, connectAuthEmulator, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+  sendPasswordResetEmail, sendEmailVerification,
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDKpkhvVXK6zueNPAdcGPnsH_Lk7f3M-sM',
@@ -28,6 +31,12 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const functions = getFunctions(app, 'us-central1');
+
+// Add <meta name="firebase-app-check-site-key" content="..."> to pages after
+// creating a reCAPTCHA Enterprise key. Functions can then enforce App Check.
+const appCheckKey = document.querySelector('meta[name="firebase-app-check-site-key"]')?.content;
+if (appCheckKey) initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(appCheckKey), isTokenAutoRefreshEnabled: true });
 
 // Local testing only: open any page on localhost with ?emulator to use the
 // Auth + Firestore emulators (firebase emulators:start) for this tab.
@@ -38,9 +47,29 @@ if (['localhost', '127.0.0.1'].includes(location.hostname)) {
   if (on) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectFunctionsEmulator(functions, '127.0.0.1', 5001);
   }
 }
 export { doc, getDoc, setDoc, serverTimestamp };
+export async function createReservation(data) {
+  return (await httpsCallable(functions, 'createReservation')(data)).data;
+}
+
+export async function joinWaitlist(data) {
+  return (await httpsCallable(functions, 'joinWaitlist')(data)).data;
+}
+
+export async function rescheduleReservation(data) {
+  return (await httpsCallable(functions, 'rescheduleReservation')(data)).data;
+}
+
+export async function exportMyData() {
+  return (await httpsCallable(functions, 'exportMyData')()).data;
+}
+
+export async function deleteMyAccount() {
+  return (await httpsCallable(functions, 'deleteMyAccount')({ confirmation: 'DELETE' })).data;
+}
 isSupported().then(ok => { if (ok) getAnalytics(app); }).catch(() => { /* analytics is optional */ });
 
 const ROLES = ['customer', 'staff', 'manager'];
@@ -85,8 +114,21 @@ export async function signIn(email, password) {
 
 export async function signUp(email, password) {
   busy = true;
-  try { await finish((await createUserWithEmailAndPassword(auth, email, password)).user); }
+  try {
+    const user = (await createUserWithEmailAndPassword(auth, email, password)).user;
+    await sendEmailVerification(user).catch(e => console.warn('Could not send verification email:', e.code || e));
+    await finish(user);
+  }
   finally { busy = false; }
+}
+
+export function resetPassword(email) {
+  return sendPasswordResetEmail(auth, email);
+}
+
+export function resendVerification() {
+  if (!auth.currentUser) throw new Error('No signed-in user');
+  return sendEmailVerification(auth.currentUser);
 }
 
 export async function logOut() {

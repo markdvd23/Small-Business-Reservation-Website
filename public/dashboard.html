@@ -18,6 +18,9 @@
     <a class="nav-brand" href="index.html">Unli Chix</a>
     <div class="account-nav">
       <a href="menu.html">The feast</a>
+      <!-- Manager-only: entry to the authorized security & resilience suite.
+           Hidden until dashboard.js confirms the manager role (plawidnwad.md §6 Stage 5). -->
+      <a href="dashboard-security.html" id="securityLink" hidden>Security</a>
       <span class="role-badge" id="roleBadge"></span>
       <a href="login.html" class="nav-cta" data-logout>Log out</a>
     </div>
@@ -36,9 +39,16 @@
             <select class="form-input" id="boardBranch"><option value="">All branches</option></select>
           </div>
           <button type="button" class="btn-ghost" id="newHold">New hold</button>
+          <button type="button" class="btn-ghost" id="exportCsv">Export CSV</button>
           <button type="button" class="btn-primary" id="newReserve">New reserve</button>
         </div>
       </header>
+      <section class="dash-metrics" aria-label="Current totals">
+        <div class="card"><span class="label">Open tickets</span><strong id="metricOpen">0</strong></div>
+        <div class="card"><span class="label">Today’s reservations</span><strong id="metricReservations">0</strong></div>
+        <div class="card"><span class="label">Guests expected</span><strong id="metricGuests">0</strong></div>
+        <div class="card"><span class="label">Waitlist</span><strong id="metricWaitlist">—</strong></div>
+      </section>
       <section class="queue" id="board" aria-labelledby="viewTitle">
         <h2 class="queue-title" id="viewTitle" tabindex="-1">All tickets</h2>
         <div class="tkt-grid" id="tickets" hidden></div>

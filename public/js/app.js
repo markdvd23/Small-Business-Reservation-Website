@@ -39,6 +39,7 @@ import { addDoc, collection, deleteDoc, onSnapshot, updateDoc, setDoc, Timestamp
   // ─── FIRESTORE STORE ─────────────────────────────────────────────────────
   // Live caches, kept current by onSnapshot. Pages listen for 'unli-data-changed'.
   let ticketCache = [];
+  let waitlistCache = [];
   let menuCache = [];
   let menuLoaded = false;
   let branchCache = [];
@@ -86,10 +87,15 @@ import { addDoc, collection, deleteDoc, onSnapshot, updateDoc, setDoc, Timestamp
       ticketCache = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(valid).sort((a, b) => millis(b) - millis(a));
       notify();
     }, err => console.warn('Could not load tickets:', err.code || err));
+    onSnapshot(collection(db, 'waitlist'), snap => {
+      waitlistCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      notify();
+    }, err => console.warn('Could not load waitlist:', err.code || err));
   });
 
   const store = {
     tickets() { return ticketCache; },
+    waitlist() { return waitlistCache; },
     // One write, number included: a second "set the number" write would need
     // update rights customers don't have.
     async addTicket(t) {

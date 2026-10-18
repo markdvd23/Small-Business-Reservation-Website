@@ -1,13 +1,18 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign In — Unli Chix</title><link rel="stylesheet" href="css/styles.css"><style>.login{min-height:calc(100svh - 72px);display:grid;grid-template-columns:1fr 1fr}.login-art{background:var(--chili);padding:4rem 5vw;display:grid;align-content:center;color:var(--cream)}.login-art .display{font-size:clamp(3.5rem,7vw,6rem)}.login-form{display:grid;place-items:center;padding:2rem}.login-form .ticket{width:min(100%,460px);padding:2.2rem}.login-form h1{font:700 2.4rem Fredoka,sans-serif;margin:.4rem 0}.form{display:grid;gap:1rem;margin-top:1.5rem}.mode-switch{border:0;background:none;padding:.25rem;color:var(--red);font-weight:900;text-decoration:underline;cursor:pointer}.mode-switch:focus-visible{outline:3px solid var(--chili);outline-offset:2px}@media(max-width:720px){.login{grid-template-columns:1fr}.login-art{padding:2.5rem 1rem}.login-form{padding:2rem 1rem}}</style><script src="js/session.js" defer></script></head><body><nav class="nav"><a class="nav-brand" href="index.html">Unli Chix</a><ul class="nav-links"><li><a href="menu.html">The feast</a></li><li><a href="branches.html">Branches</a></li></ul></nav><main class="login"><section class="login-art"><p class="eyebrow" style="color:var(--mango)">Your seat is waiting</p><h1 class="display">Good food.<br>Good <span style="color:var(--mango)">people.</span></h1><p class="lede" style="color:var(--cream)">Sign in to keep your plans and orders together.</p></section><section class="login-form"><form class="ticket form" id="loginForm" novalidate><p class="eyebrow" id="formKicker">Welcome back</p><h1 id="formTitle">Sign in to feast.</h1><label class="field">Email address<input type="email" name="email" required autocomplete="email" placeholder="you@example.com"></label><label class="field">Password<input type="password" name="password" required autocomplete="current-password" placeholder="Your password"></label><p class="form-error" id="formError" role="alert" hidden></p><button class="btn-primary" type="submit" id="formSubmit">Sign in</button><button class="mode-switch" type="button" id="modeSwitch">New here? Create an account</button><a href="accounts/guest/index.html" style="font-weight:900;text-align:center">Continue as guest →</a></form></section></main>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign In — Unli Chix</title><link rel="stylesheet" href="css/styles.css"><style>.login{min-height:calc(100svh - 72px);display:grid;grid-template-columns:1fr 1fr}.login-art{background:var(--chili);padding:4rem 5vw;display:grid;align-content:center;color:var(--cream)}.login-art .display{font-size:clamp(3.5rem,7vw,6rem)}.login-form{display:grid;place-items:center;padding:2rem}.login-form .ticket{width:min(100%,460px);padding:2.2rem}.login-form h2{font:700 2.4rem Fredoka,sans-serif;margin:.4rem 0}.form{display:grid;gap:1rem;margin-top:1.5rem}.mode-switch{border:0;background:none;padding:.25rem;color:var(--red);font-weight:900;text-decoration:underline;cursor:pointer}.mode-switch:focus-visible{outline:3px solid var(--chili);outline-offset:2px}@media(max-width:720px){.login{grid-template-columns:1fr}.login-art{padding:2.5rem 1rem}.login-form{padding:2rem 1rem}}</style><script src="js/session.js" defer></script></head><body><nav class="nav"><a class="nav-brand" href="index.html">Unli Chix</a><ul class="nav-links"><li><a href="menu.html">The feast</a></li><li><a href="branches.html">Branches</a></li></ul></nav><main class="login"><section class="login-art"><p class="eyebrow" style="color:var(--mango)">Your seat is waiting</p><h1 class="display">Good food.<br>Good <span style="color:var(--mango)">people.</span></h1><p class="lede" style="color:var(--cream)">Sign in to keep your plans and orders together.</p></section><section class="login-form"><form class="ticket form" id="loginForm" novalidate><p class="eyebrow" id="formKicker">Welcome back</p><h2 id="formTitle">Sign in to feast.</h2><label class="field">Email address<input type="email" name="email" required autocomplete="email" placeholder="you@example.com"></label><label class="field">Password<input type="password" name="password" required autocomplete="current-password" placeholder="Your password"></label><p class="form-error" id="formError" role="alert" hidden></p><button class="btn-primary" type="submit" id="formSubmit">Sign in</button><button class="mode-switch" type="button" id="modeSwitch">New here? Create an account</button><a href="accounts/guest/index.html" style="font-weight:900;text-align:center">Continue as guest →</a></form></section></main>
 <script>window.addEventListener('unli-auth-ready',()=>{if(UnliSession.role())location.replace(UnliSession.after())},{once:true})</script>
 <script type="module">
-import { signIn, signUp } from './js/firebase.js';
+import { signIn, signUp, resetPassword } from './js/firebase.js';
 
 const form = document.getElementById('loginForm');
 const password = form.password;
 const error = document.getElementById('formError');
 const submit = document.getElementById('formSubmit');
 const modeSwitch = document.getElementById('modeSwitch');
+const forgot = document.createElement('button');
+forgot.type = 'button';
+forgot.className = 'mode-switch';
+forgot.textContent = 'Forgot password?';
+modeSwitch.before(forgot);
 let mode = 'signin';
 
 const COPY = {
@@ -26,6 +31,31 @@ modeSwitch.addEventListener('click', () => {
   password.placeholder = c.placeholder;
   password.minLength = mode === 'signup' ? 8 : 0;
   error.hidden = true;
+  forgot.hidden = mode !== 'signin';
+});
+
+forgot.addEventListener('click', async () => {
+  error.hidden = true;
+  const email = form.email.value.trim();
+  if (!form.email.checkValidity()) {
+    error.textContent = 'Enter your email address first.';
+    error.hidden = false;
+    form.email.focus();
+    return;
+  }
+  forgot.disabled = true;
+  try {
+    await resetPassword(email);
+    error.textContent = 'If that email has an account, a password-reset link is on the way.';
+  } catch (err) {
+    console.warn('Password reset failed:', err.code || err);
+    error.textContent = err.code === 'auth/too-many-requests'
+      ? 'Too many requests. Wait a few minutes, then try again.'
+      : 'Couldn’t send the reset email. Check your connection and try again.';
+  } finally {
+    error.hidden = false;
+    forgot.disabled = false;
+  }
 });
 
 // One message for every sign-in failure, so the form can't be used to find

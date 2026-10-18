@@ -53,6 +53,27 @@
 
   const TYPES = { order: 'Dine-in', hold: 'Pickup', reserve: 'Reserve' };
 
+  // Reserves booked online store `where` as "2026-10-13 · 18:00"; show it like the rest.
+  const fmtDay = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); };
+  const whenText = t => (t.type === 'reserve' && t.date && t.slot ? fmtDay(t.date) + ' · ' + fmtTime(t.slot) : t.where);
+  // On the all-branches board each ticket says where it is.
+  const branchText = t => (!pick && t.branch ? (Unli.store.branch(t.branch) || { name: t.branch }).name : '');
+
+  document.getElementById('exportCsv').addEventListener('click', () => {
+    const rows = [['Number', 'Type', 'Status', 'Branch', 'Date', 'Time', 'Party', 'Customer', 'Email', 'Phone', 'Items']];
+    tickets().forEach(t => rows.push([
+      t.no, t.type, t.status, t.branch || '', t.date || '', t.slot || '', t.party || '',
+      t.customer?.name || '', t.customer?.email || '', t.customer?.phone || '', (t.items || []).join(' | '),
+    ]));
+    const csv = rows.map(row => row.map(value => '"' + String(value ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    link.download = 'unli-chix-' + (pick || 'all-branches').toLowerCase() + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.append(link);
+    link.click();
+    setTimeout(() => { URL.revokeObjectURL(link.href); link.remove(); }, 1000);
+  });
+
   // Food-state vocabulary (docs/plan.md §7.1): raw → cooking → plated → served.
   const STEPS = {
     raw:       { label: 'Raw',       next: 'cooking',   action: 'Start cooking' },
@@ -69,6 +90,11 @@
   const isOpen = t => !STEPS[t.status].done;
 
   document.getElementById('roleBadge').textContent = manager ? 'Manager' : 'Staff';
+
+  // Managers get the entry to the authorized security & resilience suite
+  // (plawidnwad.md §6 Stage 5). Never shown to staff; the suite re-checks the
+  // role and the host allowlist itself before anything runs.
+  if (manager) { const sec = document.getElementById('securityLink'); if (sec) sec.hidden = false; }
 
   // ─── BRANCH PICKER ───────────────────────────────────────────────────────
   // Narrows the board to one branch. Kept in ?branch= so a reload or bookmark
@@ -157,6 +183,12 @@
       c.innerHTML = '';
       c.append(open, Object.assign(document.createElement('span'), { className: 'sr', textContent: ' open' }));
     });
+    const today = new Date().toLocaleDateString('en-CA');
+    const todayReservations = all.filter(t => t.type === 'reserve' && t.date === today && t.status !== 'cancelled');
+    document.getElementById('metricOpen').textContent = all.filter(isOpen).length;
+    document.getElementById('metricReservations').textContent = todayReservations.length;
+    document.getElementById('metricGuests').textContent = todayReservations.reduce((sum, t) => sum + (Number(t.party) || 0), 0);
+    document.getElementById('metricWaitlist').textContent = Unli.store.waitlist().filter(w => w.status === 'waiting' && (!pick || w.branch === pick)).length;
   }
 
   // ─── TICKET CARD (signature element, docs/plan.md §7.2) ───────────────────────
@@ -185,7 +217,7 @@
 
     const where = document.createElement('p');
     where.className = 'label tkt-where';
-    where.textContent = [TYPES[t.type], t.where, t.party ? t.party + ' diners' : '', t.customer && t.customer.phone].filter(Boolean).join(' · ');
+    where.textContent = [TYPES[t.type], branchText(t), whenText(t), t.party ? t.party + ' diners' : '', t.customer && t.customer.phone].filter(Boolean).join(' · ');
 
     const items = document.createElement('ul');
     items.className = 'tkt-items';
@@ -637,7 +669,7 @@
 
   function editBranch(b) {
     const isNew = !b;
-    const d = b || { name: '', address: '', phone: '', open: '10:00', lastSeating: '20:30', close: '22:00', active: true,
+    const d = b || { name: '', address: '', phone: '', open: '10:00', lastSeating: '20:30', close: '22:00', capacity: 40, active: true,
       sort: Math.max(0, ...Unli.store.branches().map(x => x.sort || 0)) + 10 };
     const dlg = Unli.modal({
       kicker: isNew ? 'New branch' : 'Edit branch',
@@ -652,6 +684,7 @@
     const lastIn = val(Unli.input('brLast', 'time', { required: '' }), d.lastSeating);
     const closeIn = val(Unli.input('brClose', 'time', { required: '' }), d.close);
     const sortIn = val(Unli.input('brSort', 'number', { min: '0', max: '9999', step: '1', inputmode: 'numeric' }), d.sort);
+    const capacityIn = val(Unli.input('brCapacity', 'number', { min: '1', max: '500', step: '1', inputmode: 'numeric' }), d.capacity || 40);
     const activeIn = Object.assign(document.createElement('input'), { type: 'checkbox', id: 'brActive', checked: d.active === true });
     const active = document.createElement('label');
     active.className = 'check-field';
@@ -662,7 +695,7 @@
     times.append(Unli.field('Opens', openIn), Unli.field('Last seating', lastIn), Unli.field('Closes', closeIn));
     const row2 = document.createElement('div');
     row2.className = 'form-row';
-    row2.append(Unli.field('Phone', phoneIn), Unli.field('Order', sortIn, 'Lower shows first.'));
+    row2.append(Unli.field('Phone', phoneIn), Unli.field('Seat capacity', capacityIn, 'Used to stop overbooking.'), Unli.field('Order', sortIn, 'Lower shows first.'));
     dlg.body.append(Unli.field('Name', nameIn), Unli.field('Address', addrIn), row2, times, active);
 
     dlg.form.addEventListener('submit', async e => {
@@ -674,6 +707,7 @@
         open: openIn.value,
         lastSeating: lastIn.value,
         close: closeIn.value,
+        capacity: Number(capacityIn.value),
         sort: Number(sortIn.value),
         active: activeIn.checked,
       };
@@ -682,6 +716,7 @@
       if (branch.phone && !/^\+?[0-9 ()-]{7,20}$/.test(branch.phone)) return dlg.fail('Enter a valid phone number, or leave it blank.');
       if (![branch.open, branch.lastSeating, branch.close].every(t => HHMM.test(t))) return dlg.fail('Set opening, last seating, and closing times.');
       if (!(branch.open < branch.lastSeating && branch.lastSeating <= branch.close)) return dlg.fail('Last seating must be after opening and no later than closing.');
+      if (!Number.isInteger(branch.capacity) || branch.capacity < 1 || branch.capacity > 500) return dlg.fail('Capacity must be a whole number from 1 to 500.');
       if (!Number.isInteger(branch.sort) || branch.sort < 0 || branch.sort > 9999) return dlg.fail('Order must be a whole number from 0 to 9999.');
 
       let id = d.id;
@@ -941,9 +976,9 @@
     a.tickets.forEach(t => {
       const tr = body.insertRow();
       tr.insertCell().textContent = '#' + t.no;
-      const when = t.type === 'reserve' ? t.where : t.time.replace(/^Pickup /, '');
-      tr.insertCell().textContent = [TYPES[t.type], when].concat(t.items).join(' · ');
-      tr.insertCell().textContent = STEPS[t.status].label;
+      const when = t.type === 'reserve' ? whenText(t) : (t.time || '').replace(/^Pickup /, '');
+      tr.insertCell().textContent = [TYPES[t.type], when].concat(t.items || []).filter(Boolean).join(' · ');
+      tr.insertCell().textContent = STEPS[t.status] ? STEPS[t.status].label : t.status;
     });
 
     card.append(kicker, name, email, sub, table);
@@ -978,7 +1013,7 @@
   // (like the echo of our own status change) doesn't rebuild the board.
   // Menu dish ids are included: drawers are built per dish, so a menu that
   // arrives after the tickets must rebuild them.
-  const signature = list => list.map(t => t.id + ':' + t.status).join(',') + '|' + Unli.store.menu().map(m => m.id).join(',');
+  const signature = list => pick + '|' + list.map(t => t.id + ':' + t.status).join(',') + '|' + Unli.store.menu().map(m => m.id).join(',');
   const rendered = { view: null, sig: null, list: [] };
 
   function show() {

@@ -1,6 +1,6 @@
 # Unli Chix
 
-Static site on Firebase Hosting, with Firebase Auth and Firestore.
+Firebase reservation site with Hosting, Auth, Firestore, and Cloud Functions.
 
 ## Layout
 
@@ -24,6 +24,8 @@ scripts/                admin tools, never deployed
 docs/                   plan, account notes, skill copies
 firestore.rules         who can read and write what
 firebase.json           hosting, rules, emulators
+functions/              trusted booking, capacity, waitlist, privacy, email jobs
+firestore.indexes.json  indexes used by capacity and reminder queries
 .secrets/               service account key (gitignored)
 ```
 
@@ -43,7 +45,7 @@ Deploy:
 
 ```sh
 firebase deploy --only firestore:rules
-firebase deploy --only hosting
+firebase deploy --only firestore,functions,hosting
 ```
 
 Rules tests (Java 21+):
@@ -55,3 +57,4 @@ firebase emulators:exec --only firestore --project demo-unli "cd scripts && npm 
 Local site: `firebase emulators:start`, seed with `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed-menu.mjs`, open `http://127.0.0.1:5000/login.html?emulator`.
 
 More: [docs/accounts.md](docs/accounts.md) (roles, menu editing), [docs/plan.md](docs/plan.md).
+Production services and migration: [docs/production.md](docs/production.md).

@@ -38,7 +38,6 @@
 @media (max-width: 720px) {
   .member-top, .settings { display: grid; grid-template-columns: 1fr; }
   .settings > div { grid-column: 1; align-items: flex-start; flex-direction: column; gap: .4rem; }
-  .user-nav a:not(.nav-cta) { display: none; }
   .detail { padding: 1.35rem; }
   .detail dl { grid-template-columns: 1fr; gap: .2rem; }
   .detail dd { margin-bottom: .6rem; }
@@ -82,3 +81,7 @@
   .book-actions > * { flex: 1 1 100%; justify-content: center; }
 }
 .card-links { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 0; }
+.reservation-qr { display: grid; justify-items: start; gap: .75rem; margin: 1.5rem 0; }
+.reservation-qr img, .reservation-qr canvas { border: 8px solid #fff; }
+.account-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+.danger-action { color: #8b1e12; border-color: #8b1e12; }

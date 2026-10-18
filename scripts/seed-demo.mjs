@@ -46,11 +46,11 @@ const clock = hhmm => { const [h, m] = hhmm.split(':').map(Number); return ((h %
 const at = (d, hhmm) => Timestamp.fromDate(new Date(iso(d) + 'T' + hhmm + ':00'));
 
 // ─── BRANCHES ──────────────────────────────────────────────────────────────
-const hours = { open: '10:00', lastSeating: '20:30', close: '22:00' };
+const hours = { open: '10:00', lastSeating: '20:30', close: '22:00', capacity: 40 };
 const BRANCHES = {
   'San-Mateo': { name: 'San Mateo', address: 'Gen. Luna Avenue, San Mateo, Rizal', phone: '0917 555 0102', ...hours, active: true, sort: 20 },
   'Marikina':  { name: 'Marikina', address: 'J.P. Rizal Street, Marikina City', phone: '0917 555 0103', ...hours, active: true, sort: 30 },
-  'Antipolo':  { name: 'Antipolo', address: 'Sumulong Highway, Antipolo, Rizal', phone: '0917 555 0104', open: '11:00', lastSeating: '21:00', close: '22:30', active: true, sort: 40 },
+  'Antipolo':  { name: 'Antipolo', address: 'Sumulong Highway, Antipolo, Rizal', phone: '0917 555 0104', open: '11:00', lastSeating: '21:00', close: '22:30', capacity: 40, active: true, sort: 40 },
   'Cainta':    { name: 'Cainta', address: 'Ortigas Avenue Extension, Cainta, Rizal', phone: '0917 555 0105', ...hours, active: false, sort: 50 },
 };
 

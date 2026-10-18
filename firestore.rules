@@ -39,11 +39,15 @@ service cloud.firestore {
         && request.resource.data.role == 'customer'
         && request.resource.data.email == request.auth.token.email;
 
+      // Profile edits are deliberately narrow. Role and email remain unchanged.
       allow update: if signedIn() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'updatedAt'])
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.email == resource.data.email
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
-        && request.resource.data.name.size() <= 60;
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.updatedAt == request.time;
 
       allow delete: if false;
     }
@@ -98,7 +102,7 @@ service cloud.firestore {
             && (isStaff() || request.resource.data.customer.email == request.auth.token.email))
           ||
           (request.resource.data.type == 'reserve' && request.resource.data.status == 'reserved'
-            && (isStaff() || customerTable()))
+            && isStaff())
         );
 
       // Staff move tickets along. A customer may only cancel their own
@@ -156,12 +160,13 @@ service cloud.firestore {
     // `branch`, so a branch is paused (active: false), never deleted.
     function hhmm(t) { return t is string && t.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'); }
     function validBranch(d) {
-      return d.keys().hasOnly(['name', 'address', 'phone', 'open', 'lastSeating', 'close', 'active', 'sort', 'updatedAt'])
+      return d.keys().hasOnly(['name', 'address', 'phone', 'open', 'lastSeating', 'close', 'capacity', 'active', 'sort', 'updatedAt'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 40
         && d.address is string && d.address.size() >= 1 && d.address.size() <= 120
         && d.get('phone', '') is string && d.get('phone', '').size() <= 20
         && hhmm(d.open) && hhmm(d.lastSeating) && hhmm(d.close)
         && d.open < d.lastSeating && d.lastSeating <= d.close
+        && d.capacity is int && d.capacity >= 1 && d.capacity <= 500
         && d.active is bool
         && d.sort is int && d.sort >= 0 && d.sort <= 9999
         && d.updatedAt == request.time;
@@ -185,10 +190,24 @@ service cloud.firestore {
         && request.resource.data.actor == request.auth.token.email
         && request.resource.data.role == me().role
         && request.resource.data.createdAt == request.time
-        && request.resource.data.action in ['Placed hold', 'Created reserve', 'Booked table', 'Cancelled reserve', 'Hid from menu', 'Returned to menu', 'Added dish', 'Edited dish', 'Removed dish', 'Viewed account', 'Added branch', 'Edited branch']
+        && request.resource.data.action in ['Placed hold', 'Created reserve', 'Booked table', 'Rescheduled reserve', 'Cancelled reserve', 'Hid from menu', 'Returned to menu', 'Added dish', 'Edited dish', 'Removed dish', 'Viewed account', 'Added branch', 'Edited branch']
         && request.resource.data.target is string && request.resource.data.target.size() <= 120;
       allow read: if isManager();
       allow update, delete: if false;
+    }
+
+    match /waitlist/{entryId} {
+      allow read: if isStaff();
+      allow create: if false;
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['waiting', 'contacted', 'booked', 'expired']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /mail/{mailId} {
+      allow read, write: if false;
     }
 
     // Anything not matched above is closed.

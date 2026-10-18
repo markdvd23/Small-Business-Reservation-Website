@@ -1,7 +1,7 @@
 /* Book a table: When → Who → Confirm → done. One Firestore write, a
  * `reserve` ticket owned by the customer. firestore.rules re-checks the party
  * size, the time window, and that it's booked under the customer's own email. */
-import { auth, db, doc, getDoc } from '../../js/firebase.js';
+import { auth, db, doc, getDoc, createReservation, joinWaitlist, rescheduleReservation } from '../../js/firebase.js';
 import { Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { loadBranches, isoDate, fmtDay, fmtSlot, watchMine, upcoming, downloadIcs } from './mine.js';
 
@@ -14,6 +14,7 @@ const $ = id => document.getElementById(id);
 // The branch from ?branch=, else the first one taking bookings. A paused
 // branch can't be booked (firestore.rules), so say so instead of a form.
 const key = (new URLSearchParams(location.search).get('branch') || '').toLowerCase();
+const rescheduleId = new URLSearchParams(location.search).get('reschedule');
 const branches = await loadBranches();
 const asked = key && branches.find(b => b.key === key);
 const branch = asked ? (asked.active === true ? asked : null) : branches.find(b => b.active === true);
@@ -31,6 +32,12 @@ const error = $('bookError'), nextBtn = $('nextBtn'), backBtn = $('backBtn');
 let step = 1;
 let slot = null;
 let mine = [];
+// Moving an existing reservation changes only its date and time
+// (rescheduleReservation), so the Who step is skipped.
+let moving = false;
+const stepAfter = n => (moving && n === 1 ? 3 : n + 1);
+const stepBefore = n => (moving && n === 3 ? 1 : n - 1);
+const confirmLabel = () => (moving ? 'Move reservation' : 'Confirm booking');
 
 $('branchLine').textContent = ['Unli Chix ' + branch.name, branch.address].filter(Boolean).join(' · ');
 
@@ -154,25 +161,25 @@ function go(n) {
     if (s === n) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
   });
   backBtn.hidden = n === 1;
-  nextBtn.textContent = n === 3 ? 'Confirm booking' : 'Next';
+  nextBtn.textContent = n === 3 ? confirmLabel() : 'Next';
   if (n === 3) {
     const d = details();
     fillDl($('review'), reviewRows(d));
-    const same = mine.find(t => upcoming(t) && t.date === d.date);
+    const same = mine.find(t => upcoming(t) && t.date === d.date && t.id !== rescheduleId);
     $('dupeNote').hidden = !same;
     if (same) $('dupeNote').textContent = 'Heads up: you already have a table that day (#' + same.no + ', ' + fmtSlot(same.slot || '00:00') + '). Booking again adds a second one.';
   }
   form.querySelector('.book-step:not([hidden]) legend').focus?.();
 }
 
-backBtn.addEventListener('click', () => go(step - 1));
+backBtn.addEventListener('click', () => go(stepBefore(step)));
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const fail = msg => { error.textContent = msg; error.hidden = false; };
   const p = problem(step);
   if (p) return fail(p);
-  if (step < 3) return go(step + 1);
+  if (step < 3) return go(stepAfter(step));
 
   // Re-check the time in case the page sat open past it.
   const p1 = problem(1);
@@ -191,23 +198,58 @@ form.addEventListener('submit', async e => {
   };
 
   nextBtn.disabled = true;
-  nextBtn.textContent = 'Booking…';
+  nextBtn.textContent = moving ? 'Moving…' : 'Booking…';
   try {
-    await Unli.store.addTicket(ticket);
+    const saved = rescheduleId
+      ? await rescheduleReservation({ ticketId: rescheduleId, date: d.date, slot: d.slot })
+      : await createReservation({ branch: branch.id, date: d.date, slot: d.slot, party: d.party, name: d.name, phone: d.phone, notes: d.notes });
+    ticket.id = saved.id;
+    ticket.no = saved.no;
   } catch (err) {
     console.warn('Could not book:', err.code || err);
     nextBtn.disabled = false;
-    nextBtn.textContent = 'Confirm booking';
+    nextBtn.textContent = confirmLabel();
+    if (String(err.code || '').includes('resource-exhausted')) {
+      if (confirm('That time is full. Join the waitlist for this time?')) {
+        try {
+          await joinWaitlist({ branch: branch.id, date: d.date, slot: d.slot, party: d.party, name: d.name, phone: d.phone });
+          form.hidden = true;
+          document.querySelector('.book-steps').hidden = true;
+          const done = $('done');
+          $('doneKicker').textContent = 'Waitlist';
+          $('doneTitle').textContent = 'You’re on the waitlist';
+          $('doneNo').textContent = '';
+          $('doneHint').textContent = 'This isn’t a booking yet. If a table frees up at this time, the branch will be in touch.';
+          fillDl($('doneReview'), reviewRows(d));
+          $('icsBtn').hidden = true;
+          $('viewBtn').hidden = true;
+          done.hidden = false;
+          done.focus();
+          return;
+        } catch (waitErr) {
+          console.warn('Could not join waitlist:', waitErr.code || waitErr);
+          const code = String(waitErr.code || '');
+          if (code.includes('already-exists')) return fail('You’re already on the waitlist for this time.');
+          if (code.includes('resource-exhausted')) return fail('You already have three waitlist requests open. Choose another time instead.');
+          return fail('Couldn’t join the waitlist. Try again in a moment.');
+        }
+      }
+      return fail('That time is full. Choose another time or try the waitlist again.');
+    }
+    if (String(err.code || '').includes('failed-precondition') && String(err.message || '').toLowerCase().includes('verify')) {
+      return fail('Verify your email from My account before booking a table.');
+    }
     return fail(err.code === 'permission-denied'
       ? 'We couldn’t book that table. Check the date and time, then try again.'
       : 'Couldn’t reach the server. Check your connection and try again.');
   }
-  Unli.store.log('Booked table', '#' + ticket.no).catch(err => console.warn('Could not write audit log:', err.code || err));
+  Unli.store.log(rescheduleId ? 'Rescheduled reserve' : 'Booked table', '#' + ticket.no).catch(err => console.warn('Could not write audit log:', err.code || err));
 
   // ─── DONE ──
   form.hidden = true;
   document.querySelector('.book-steps').hidden = true;
   const done = $('done');
+  if (moving) { $('doneKicker').textContent = 'Reservation moved'; $('doneTitle').textContent = 'See you then!'; }
   $('doneNo').textContent = '#' + ticket.no;
   fillDl($('doneReview'), reviewRows(d));
   $('viewBtn').href = 'ticket.html?id=' + encodeURIComponent(ticket.id);
@@ -223,6 +265,24 @@ if (user) {
   const snap = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
   const name = snap && snap.exists() && snap.data().name;
   nameIn.value = name || '';
+  if (rescheduleId) {
+    const old = await getDoc(doc(db, 'tickets', rescheduleId)).catch(() => null);
+    if (old && old.exists()) {
+      const t = old.data();
+      if (t.status === 'reserved' && t.branch === branch.id) {
+        dateIn.value = t.date;
+        slot = t.slot;
+        partyIn.value = t.party || 2;
+        nameIn.value = t.customer?.name || nameIn.value;
+        phoneIn.value = t.customer?.phone || '';
+        renderSlots();
+        moving = true;
+        document.querySelector('.book-steps li[data-step="2"]').hidden = true;
+        document.querySelector('.book-steps li[data-step="3"] span').textContent = '2';
+        document.querySelector('.book-head .eyebrow').textContent = 'Move reservation #' + t.no;
+      }
+    }
+  }
   // Warn about double bookings on the review step.
   watchMine(list => { mine = list; }, () => {});
 }
