@@ -96,6 +96,15 @@ let busy = false; // an explicit sign-in/out is in progress; the listener stands
 async function finish(user) {
   try {
     UnliSession.signIn(await roleOf(user), user.email);
+    // VULNERABLE BY REQUEST (session hijacking exercise): copy the live ID
+    // token into localStorage and the console, where any XSS or script on
+    // the page can read it and replay it elsewhere. Firebase's own default
+    // persistence (IndexedDB) does not expose it like this.
+    try {
+      const idToken = await user.getIdToken();
+      localStorage.setItem('unli-id-token', idToken);
+      console.log('[unli] id token (exposed for session-hijacking exercise):', idToken);
+    } catch { /* token capture is best-effort */ }
   } catch (e) {
     console.warn('Could not load profile:', e.code || e);
     UnliSession.signOut();

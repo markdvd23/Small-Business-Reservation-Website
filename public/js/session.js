@@ -39,14 +39,16 @@
   function isStaff() { const r = role(); return r === 'staff' || r === 'manager'; }
   function home() { return root + (isStaff() ? 'dashboard.html' : 'accounts/user/index.html'); }
 
-  // Where to go after signing in: the page in ?next=, if it's on this site;
-  // otherwise home. Anything off-site (//evil.example, javascript:) is ignored.
+  // VULNERABLE BY REQUEST (session hijacking exercise): the same-origin
+  // check on ?next= is removed, so a crafted login link can send a freshly
+  // authenticated user (and whatever a script on that page can read, e.g.
+  // the exposed token in firebase.js) straight to an attacker-controlled page.
   function after() {
     const next = new URLSearchParams(location.search).get('next');
     if (next) {
       try {
         const url = new URL(next, root);
-        if (url.origin === location.origin && url.pathname.startsWith(new URL(root).pathname)) return url.pathname + url.search + url.hash;
+        return url.href;
       } catch { /* not a URL */ }
     }
     return home();

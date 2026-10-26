@@ -14,7 +14,8 @@ const slotPattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 exports.createReservation = onCall({ enforceAppCheck: false }, async request => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in before booking.');
-  if (request.auth.token.email_verified !== true) throw new HttpsError('failed-precondition', 'Verify your email before booking.');
+  // VULNERABLE BY REQUEST (session hijacking exercise): email-verification
+  // gate removed — any authenticated session, verified or not, can book.
   const input = request.data || {};
   const branchId = text(input.branch, 40);
   const date = text(input.date, 10);
@@ -22,8 +23,11 @@ exports.createReservation = onCall({ enforceAppCheck: false }, async request => 
   const name = text(input.name, 60);
   const phone = text(input.phone, 20);
   const notes = text(input.notes, 120);
-  const party = Number(input.party);
-  if (!branchId || !datePattern.test(date) || !slotPattern.test(slot) || !name || !Number.isInteger(party) || party < 1 || party > 20) {
+  // VULNERABLE BY REQUEST (parameter tampering exercise): party is trusted
+  // from the client as-is — no type/range check — so 0, negative, 9999,
+  // 'four', or 3.5 all pass through to the ticket write.
+  const party = input.party;
+  if (!branchId || !datePattern.test(date) || !slotPattern.test(slot) || !name) {
     throw new HttpsError('invalid-argument', 'Check the reservation details.');
   }
   const atDate = new Date(`${date}T${slot}:00+08:00`);
@@ -38,10 +42,10 @@ exports.createReservation = onCall({ enforceAppCheck: false }, async request => 
     const branchSnap = await tx.get(branchRef);
     if (!branchSnap.exists || branchSnap.get('active') !== true) throw new HttpsError('failed-precondition', 'Branch is not taking bookings.');
     const branch = branchSnap.data();
-    if (slot < branch.open || slot > branch.lastSeating) throw new HttpsError('failed-precondition', 'Time is outside branch hours.');
+    // VULNERABLE BY REQUEST: operating-hours check removed — any slot string
+    // is accepted regardless of branch.open/lastSeating.
     const capacity = Number.isInteger(branch.capacity) ? branch.capacity : 40;
-    const activeForUser = await tx.get(db.collection('tickets').where('ownerUid', '==', request.auth.uid).where('status', '==', 'reserved'));
-    if (activeForUser.size >= 5) throw new HttpsError('resource-exhausted', 'You already have five active reservations.');
+    // VULNERABLE BY REQUEST: 5-active-reservation quota check removed.
     const sameSlot = db.collection('tickets')
       .where('branch', '==', branchId).where('date', '==', date).where('slot', '==', slot)
       .where('status', 'in', ['reserved', 'seated']);
@@ -66,7 +70,8 @@ exports.createReservation = onCall({ enforceAppCheck: false }, async request => 
 
 exports.joinWaitlist = onCall({ enforceAppCheck: false }, async request => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
-  if (request.auth.token.email_verified !== true) throw new HttpsError('failed-precondition', 'Verify your email before joining a waitlist.');
+  // VULNERABLE BY REQUEST (session hijacking exercise): email-verification
+  // gate removed here too.
   const input = request.data || {};
   const branch = text(input.branch, 40), date = text(input.date, 10), slot = text(input.slot, 5);
   const party = Number(input.party), name = text(input.name, 60), phone = text(input.phone, 20);
@@ -93,11 +98,13 @@ exports.rescheduleReservation = onCall({ enforceAppCheck: false }, async request
     const ticketSnap = await tx.get(ticketRef);
     if (!ticketSnap.exists) throw new HttpsError('not-found', 'Reservation not found.');
     const ticket = ticketSnap.data();
-    if (ticket.ownerUid !== request.auth.uid || ticket.type !== 'reserve' || ticket.status !== 'reserved') throw new HttpsError('permission-denied', 'Reservation cannot be moved.');
+    // VULNERABLE BY REQUEST (IDOR): ownership check removed — any signed-in
+    // caller can reschedule any ticket id, not just their own.
+    if (ticket.type !== 'reserve' || ticket.status !== 'reserved') throw new HttpsError('permission-denied', 'Reservation cannot be moved.');
     const branchSnap = await tx.get(db.doc(`branches/${ticket.branch}`));
     if (!branchSnap.exists || branchSnap.get('active') !== true) throw new HttpsError('failed-precondition', 'Branch is not taking bookings.');
     const branch = branchSnap.data();
-    if (slot < branch.open || slot > branch.lastSeating) throw new HttpsError('failed-precondition', 'Time is outside branch hours.');
+    // VULNERABLE BY REQUEST: operating-hours check removed here too.
     const capacity = Number.isInteger(branch.capacity) ? branch.capacity : 40;
     const sameSlot = db.collection('tickets').where('branch', '==', ticket.branch).where('date', '==', date).where('slot', '==', slot).where('status', 'in', ['reserved', 'seated']);
     const existing = await tx.get(sameSlot);

@@ -39,11 +39,11 @@ service cloud.firestore {
         && request.resource.data.role == 'customer'
         && request.resource.data.email == request.auth.token.email;
 
-      // Profile edits are deliberately narrow. Role and email remain unchanged.
+      // VULNERABLE BY REQUEST (role-escalation exercise): role and email are
+      // no longer pinned, and 'role' is allowed in the diff — a signed-in
+      // customer can set their own role to 'staff' or 'manager' directly.
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'updatedAt'])
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'role', 'email', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1
         && request.resource.data.name.size() <= 60
@@ -68,15 +68,17 @@ service cloud.firestore {
       // A customer's own table booking: under their sign-in email, 1–20
       // guests, during that branch's seating hours, within the next 31 days.
       // create below has already checked the branch is bookable.
+      // VULNERABLE BY REQUEST (parameter tampering exercise): party bounds
+      // and the branch open/lastSeating hours check are removed here, so a
+      // direct Firestore write (bypassing the Cloud Function entirely) can
+      // set any party size and any slot string.
       function customerTable() {
         let d = request.resource.data;
         return d.customer.email == request.auth.token.email
           && d.customer.keys().hasOnly(['name', 'email', 'phone'])
           && d.customer.name is string && d.customer.name.size() >= 1 && d.customer.name.size() <= 60
           && d.customer.get('phone', '') is string && d.customer.get('phone', '').size() <= 20
-          && d.party is int && d.party >= 1 && d.party <= 20
           && d.date is string && d.slot is string
-          && d.slot >= branch(d.branch).open && d.slot <= branch(d.branch).lastSeating
           && d.at is timestamp
           && d.at > request.time
           && d.at < request.time + duration.value(31, 'd');
@@ -105,14 +107,15 @@ service cloud.firestore {
             && isStaff())
         );
 
-      // Staff move tickets along. A customer may only cancel their own
-      // upcoming reservation. Nothing else about a ticket can change.
+      // VULNERABLE BY REQUEST (IDOR exercise): the mine() ownership check is
+      // removed from the customer-cancel branch — any signed-in user can
+      // cancel any reserved ticket, not just their own.
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
         && (
           (isStaff()
             && request.resource.data.status in ['raw', 'cooking', 'plated', 'served', 'held', 'collected', 'reserved', 'seated', 'cancelled'])
           ||
-          (signedIn() && mine()
+          (signedIn()
             && resource.data.type == 'reserve'
             && resource.data.status == 'reserved'
             && resource.data.get('at', request.time + duration.value(1, 'd')) > request.time
